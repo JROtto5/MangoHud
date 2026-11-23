@@ -2,6 +2,8 @@
 #include <numeric>
 #include <sstream>
 #include <cmath>
+#include <cstdio>
+#include <cctype>
 
 #include "cpu.hpp"
 #include "power/rapl.hpp"
@@ -18,6 +20,7 @@ CPU::CPU() {
     if (!ifs_cpuinfo.is_open())
         SPDLOG_WARN("failed to open cpu info file. cpu frequency will not work.");
 
+    find_core_types();
     power_usage = init_power_usage();
     temperature.find_temperature_sensor();
 }
@@ -55,6 +58,49 @@ void CPU::poll() {
     poll_temperature();
 }
 
+static std::set<int> read_cpu_list(const std::string& path) {
+    std::ifstream file(path);
+    std::set<int> cpus;
+
+    for (std::string range; std::getline(file, range, ',');) {
+        int first = 0, last = 0;
+        int n = std::sscanf(range.c_str(), "%d-%d", &first, &last);
+
+        if (n < 1)
+            continue;
+
+        if (n == 1)
+            last = first;
+
+        for (int cpu = first; cpu <= last; cpu++)
+            cpus.insert(cpu);
+    }
+
+    return cpus;
+}
+
+void CPU::find_core_types() {
+    p_cores = read_cpu_list("/sys/devices/cpu_core/cpus");
+
+    for (const char* pmu : { "cpu_atom", "cpu_lowpower" })
+        e_cores.merge(read_cpu_list(std::string("/sys/devices/") + pmu + "/cpus"));
+}
+
+std::vector<std::string> CPU::get_core_types() {
+    std::vector<std::string> types;
+
+    for (int cpu : core_ids) {
+        if (p_cores.contains(cpu))
+            types.push_back("P");
+        else if (e_cores.contains(cpu))
+            types.push_back("E");
+        else
+            types.push_back("");
+    }
+
+    return types;
+}
+
 cpu_info_t CPU::get_info() {
     return info;
 }
@@ -71,10 +117,15 @@ std::vector<std::vector<uint64_t>> CPU::get_cpu_times() {
     ifs_stat.seekg(0);
 
     std::vector<std::vector<uint64_t>> times;
+    core_ids.clear();
 
     for (std::string line; std::getline(ifs_stat, line);) {
         if (line.substr(0, 3) != "cpu")
             continue;
+
+        // cores are indexed in /proc/stat order, which skips offline cpus
+        if (line.size() > 3 && std::isdigit(line[3]))
+            core_ids.push_back(std::stoi(line.substr(3)));
 
         std::stringstream ss(line);
         ss.seekg(5);

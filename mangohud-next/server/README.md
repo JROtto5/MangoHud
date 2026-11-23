@@ -171,13 +171,16 @@ Available metrics currently include:
 | Reference | Keys |
 | --- | --- |
 | `[GPU, index, KEY]` | `NAME`, `LOAD`, `VRAM_USED`, `GTT_USED`, `VRAM_TOTAL`, `VRAM_CLOCK`, `VRAM_TEMP`, `TEMP`, `JUNCTION_TEMP`, `CORE_CLOCK`, `VOLTAGE`, `POWER`, `POWER_LIMIT`, `FAN_SPEED`, `PROCESS_LOAD`, `PROCESS_VRAM_USED`, `PROCESS_GTT_USED` |
-| `[CPU, index, KEY]` | `LOAD`, `FREQ` |
+| `[CPU, index, KEY]` | `LOAD`, `FREQ`, `TYPE` |
 | `[CPU, KEY]` | `LOAD`, `MAX_LOAD`, `FREQ`, `TEMP`, `POWER`, `UNCORE_POWER` |
 | `[RAM, KEY]` | `USED`, `TOTAL`, `SWAP_USED` |
 | `KEY` | `ENGINE_NAME`, `VULKAN_DRIVER`, `HDR`, `RESOLUTION`, `FPS`, `FRAMETIME`, `FRAMETIME_MIN`, `FRAMETIME_MAX`, `FRAMETIMES`, `REFRESH_FPS`, `REFRESH_FRAMETIME`, `REFRESH_FRAMETIME_MIN`, `REFRESH_FRAMETIME_MAX`, `REFRESH_FRAMETIMES`, `APP_FPS`, `APP_FRAMETIME`, `APP_FRAMETIME_MIN`, `APP_FRAMETIME_MAX`, `APP_FRAMETIMES`, `HUD_FPS`, `HUD_FRAMETIME`, `HUD_FRAMETIME_MIN`, `HUD_FRAMETIME_MAX`, `HUD_FRAMETIMES` |
 
 `NAME` uses `amdgpu.ids` for AMD and NVML for NVIDIA, falling back to `pci.ids`
 or the device IDs.
+
+`TYPE` is `P` or `E` for each core of an Intel hybrid CPU, read from the
+`cpu_core`, `cpu_atom` and `cpu_lowpower` PMUs. It is empty on other CPUs.
 
 `UNCORE_POWER` reports power from the RAPL domain named `uncore`. Its scope
 depends on the hardware; it should not be assumed to represent GPU-only power.

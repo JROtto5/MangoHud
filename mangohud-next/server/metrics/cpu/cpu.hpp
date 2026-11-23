@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <fstream>
+#include <set>
 #include "../gpu/gpu_metrics.hpp"
 #include "../hwmon.hpp"
 
@@ -62,6 +63,7 @@ private:
     void poll_frequency();
     void poll_power_usage();
     void poll_temperature();
+    void find_core_types();
 
     std::unique_ptr<CPUPower> init_power_usage();
 
@@ -75,6 +77,9 @@ private:
 
     cpu_info_t info;
     std::vector<core_info_t> cores;
+    std::vector<int> core_ids;
+    std::set<int> p_cores;
+    std::set<int> e_cores;
 
 public:
     CPU();
@@ -83,4 +88,5 @@ public:
     virtual void pre_poll_overrides() {}
     cpu_info_t get_info();
     std::vector<core_info_t> get_core_info();
+    std::vector<std::string> get_core_types();
 };

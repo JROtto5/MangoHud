@@ -184,11 +184,14 @@ void Metrics::update() {
             new_metrics["CPU"]["MAX_LOAD"] = {max_core->load, "%"};
         }
 
+        const auto core_types = cpu.get_core_types();
+
         for (size_t i = 0; i < core_metrics.size(); i++) {
             const std::string core_index = "CPU" + std::to_string(i);
 
             new_metrics[core_index]["LOAD"] = {core_metrics[i].load, "%"};
             new_metrics[core_index]["FREQ"] = {core_metrics[i].frequency, "MHz"};
+            new_metrics[core_index]["TYPE"] = {i < core_types.size() ? core_types[i] : std::string()};
         }
 
         auto ram_metrics = get_ram_info();
